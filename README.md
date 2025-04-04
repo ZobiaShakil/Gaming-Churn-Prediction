@@ -42,6 +42,7 @@ Use GridSearchCV to fine-tune parameters for the best-performing model.
 Model Interpretation:
 
 Use SHAP to visualize feature importance and understand decision thresholds.
+![image](https://github.com/user-attachments/assets/568a5d2d-c869-4e80-8853-0478afb98554)
 
 ### Results
 After evaluating models with cross-validation and performing hyperparameter tuning, the best model was selected based on F1-score. The final tuned model achieved around 61% accuracy and an F1 score of approximately 0.235 on the test set. SHAP analysis provided insights into which features (such as playtime and engagement score) most strongly influenced the predictions.
