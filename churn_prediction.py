@@ -1,11 +1,8 @@
-# =========================
 # 1. Import Libraries
-# =========================
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-
 # Modeling and Evaluation libraries 
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
 from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix, make_scorer
@@ -13,15 +10,12 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
+import shap # For SHAP explainability
+import joblib #for saving the data
 
-# For SHAP explainability
-import shap
-
-# =========================
 # 2. Load the Preprocessed & Engineered Data
-# =========================
-# Use one of the files; if "gaming_churn_final.csv" is the final dataset, load it:
-df = pd.read_csv(r"C:\Users\zobia\OneDrive\AI-ML\Projects\CustomerChurnPred\gaming_churn_final.csv")
+# since the preprocessed and feature engineered data is in gaming_churn_final.csv we will use that file
+df = pd.read_csv(r"gaming_churn_final.csv")
 
 # Fix missing values in tenure_bucket
 df['tenure_bucket'] = df['tenure_bucket'].fillna("Unknown")
@@ -32,22 +26,16 @@ print(df.head())
 print("\nData Info:")
 print(df.info())
 
-# =========================
 # 3. Define Features and Target
-# =========================
-# Using the numerical and engineered features (excluding the categorical 'tenure_bucket' for now)
+# Using the numerical and engineered features 
 features = ['total_playtime_hours', 'last_login_days_ago', 'in_app_purchases', 'engagement_score']
 X = df[features]
 y = df['churn_status']  # 0 for active, 1 for churned
 
-# =========================
 # 4. Split Data into Training and Testing Sets
-# =========================
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# =========================
 # 5. Model Training and Cross-Validation
-# =========================
 models = {
     "Logistic Regression": LogisticRegression(max_iter=1000, random_state=42),
     "Decision Tree": DecisionTreeClassifier(random_state=42),
@@ -67,16 +55,12 @@ for name, model in models.items():
     cv_results[name] = scores
     print(f"{name} - Accuracy: {scores['Accuracy']:.3f}, F1: {scores['F1']:.3f}")
 
-# =========================
 # 6. Select the Best Model
-# =========================
 best_model_name = max(cv_results, key=lambda m: cv_results[m]['F1'])
 print("\nBest Model Based on CV F1-Score:", best_model_name)
 best_model = models[best_model_name]
 
-# =========================
 # 7. Hyperparameter Tuning for the Best Model (using GridSearchCV)
-# =========================
 if best_model_name == "Random Forest":
     param_grid = {
         'n_estimators': [100, 200],
@@ -111,9 +95,7 @@ print("Best CV F1-Score:", grid_search.best_score_)
 
 tuned_model = grid_search.best_estimator_
 
-# =========================
 # 8. Evaluate Tuned Model on Test Set
-# =========================
 y_pred = tuned_model.predict(X_test)
 test_accuracy = accuracy_score(y_test, y_pred)
 test_f1 = f1_score(y_test, y_pred)
@@ -125,26 +107,18 @@ print(classification_report(y_test, y_pred))
 print("Confusion Matrix:")
 print(confusion_matrix(y_test, y_pred))
 
-# =========================
 # 9. Model Interpretation with SHAP
-# =========================
 explainer = shap.TreeExplainer(tuned_model)
 shap_values = explainer.shap_values(X_train)
 
 # Plot SHAP summary plot for the first class (churned customers)
-# If you are doing binary classification:
+# doing binary classification:
 shap_values_for_class_1 = shap_values[:, :, 1]
-
-# Generate a SHAP summary bar plot
-# use the shap_values for the correct class instead of the incorrect dimension
+#Generate a SHAP summary bar plot
 shap.summary_plot(shap_values_for_class_1, X_train, plot_type="bar")
-# =========================
-# 10. Save the Final Tuned Model and Preprocessed Data
-# =========================
-"""
-import joblib
+
+# 10. Saving the Final Tuned Model and Preprocessed Data
 joblib.dump(tuned_model, "final_tuned_churn_model.pkl")
 X_train.to_csv("X_train_preprocessed.csv", index=False)
 X_test.to_csv("X_test_preprocessed.csv", index=False)
 print("\nFinal tuned model and preprocessed data saved.")
-"""
